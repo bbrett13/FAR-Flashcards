@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="FAR Cards" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-180.png" />
+<title>FAR Flashcards</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#111827; --card:#ffffff; --text:#0f172a;
+    --muted:#64748b; --line:#e2e8f0; --retire:#15803d; --review:#2563eb; --miss:#b91c1c;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%;background:var(--bg)}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;
+    color:white;min-height:100vh;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:18px 16px 30px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  h1{font-size:26px;margin:0;letter-spacing:-.02em}
+  .sub{color:#cbd5e1;font-size:14px;margin-top:4px}
+  .panel{background:var(--panel);border:1px solid #263244;border-radius:18px;padding:14px;margin-bottom:14px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .stat{background:#172033;border-radius:12px;padding:10px 6px;text-align:center}
+  .num{font-size:20px;font-weight:800}.lab{font-size:10px;color:#cbd5e1;margin-top:2px}
+  .progress{height:8px;background:#263244;border-radius:999px;overflow:hidden;margin-top:12px}
+  .bar{height:100%;background:white;width:0%}
+  .card{
+    background:var(--card);color:var(--text);border-radius:22px;min-height:365px;
+    padding:28px;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    text-align:center;box-shadow:0 18px 45px rgba(0,0,0,.24);cursor:pointer;user-select:none
+  }
+  .side{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:800;margin-bottom:18px}
+  .cardtext{font-size:29px;line-height:1.24;font-weight:750;white-space:pre-wrap}
+  .hint{margin-top:24px;color:var(--muted);font-size:13px}
+  .actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}
+  button{border:0;border-radius:14px;padding:15px 14px;font-size:16px;font-weight:800;cursor:pointer}
+  .retire{background:var(--retire);color:white}.review{background:var(--review);color:white}.miss{background:var(--miss);color:white}
+  .secondary{background:#e2e8f0;color:#0f172a;padding:11px 12px;font-size:14px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px}
+  dialog{border:0;border-radius:18px;width:min(680px,92vw);padding:0}
+  dialog::backdrop{background:rgba(0,0,0,.65)}
+  .modal{padding:20px;color:#0f172a}
+  textarea{width:100%;min-height:220px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}
+  input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:12px;margin-bottom:10px;font-size:15px}
+  .row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+  .note{font-size:13px;color:#475569;line-height:1.45}
+  .pill{font-size:12px;background:#263244;color:#e2e8f0;border-radius:999px;padding:7px 10px}
+  .topright{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  @media(min-width:680px){.actions{grid-template-columns:repeat(3,1fr)}.card{min-height:390px}.cardtext{font-size:32px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>FAR Flashcards</h1>
+      <div class="sub">Three choices. No clutter.</div>
+    </div>
+    <div class="topright"><span id="modePill" class="pill">Active deck</span></div>
+  </header>
+
+  <div class="panel">
+    <div class="stats">
+      <div class="stat"><div class="num" id="activeCount">0</div><div class="lab">ACTIVE</div></div>
+      <div class="stat"><div class="num" id="retiredCount">0</div><div class="lab">RETIRED</div></div>
+      <div class="stat"><div class="num" id="reviewCount">0</div><div class="lab">REVIEW AGAIN</div></div>
+      <div class="stat"><div class="num" id="missCount">0</div><div class="lab">DON'T KNOW</div></div>
+    </div>
+    <div class="progress"><div id="bar" class="bar"></div></div>
+  </div>
+
+  <div id="studyArea">
+    <div id="flashcard" class="card" role="button" tabindex="0" aria-label="Flashcard. Tap to flip.">
+      <div class="side" id="sideLabel">Question</div>
+      <div class="cardtext" id="cardText">Add FAR cards to begin.</div>
+      <div class="hint" id="hint">Tap the card to reveal the answer.</div>
+    </div>
+
+    <div class="actions">
+      <button class="retire" id="retireBtn">✓ Know it — don’t show again</button>
+      <button class="review" id="reviewBtn">↻ Know it — review again</button>
+      <button class="miss" id="missBtn">× I do not know this</button>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="toolbar">
+      <button class="secondary" id="addBtn">Add card</button>
+      <button class="secondary" id="importBtn">Import cards</button>
+      <button class="secondary" id="missedBtn">Study “Don’t Know”</button>
+      <button class="secondary" id="reviewAgainBtn">Study “Review Again”</button>
+      <button class="secondary" id="allActiveBtn">Study Active Deck</button>
+      <button class="secondary" id="undoBtn">Undo last rating</button>
+      <button class="secondary" id="resetBtn">Reset ratings</button>
+      <button class="secondary" id="exportBtn">Export deck</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="addDialog">
+  <div class="modal">
+    <h2>Add FAR card</h2>
+    <input id="frontInput" placeholder="Question / front" />
+    <textarea id="backInput" placeholder="Answer / back"></textarea>
+    <div class="row">
+      <button class="secondary" onclick="addDialog.close()">Cancel</button>
+      <button class="review" id="saveCardBtn">Save card</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="importDialog">
+  <div class="modal">
+    <h2>Import FAR cards</h2>
+    <p class="note">Paste one card per line using <b>question | answer</b>. Existing cards are kept.</p>
+    <textarea id="importText" placeholder="Question | Answer"></textarea>
+    <div class="row">
+      <button class="secondary" onclick="importDialog.close()">Cancel</button>
+      <button class="review" id="doImportBtn">Import</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const KEY='farFlashcards_v2';
+const defaultState={cards:[], currentMode:'active', history:[]};
+let state=load(), session=[], idx=0, showingBack=false;
+
+function cloneDefault(){ return JSON.parse(JSON.stringify(defaultState)); }
+function load(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(KEY));
+    if(saved && Array.isArray(saved.cards)) return {...defaultState,...saved};
+  }catch(e){}
+  return cloneDefault();
+}
+function save(){ localStorage.setItem(KEY,JSON.stringify(state)); }
+function eligibleCards(){
+  if(state.currentMode==='miss') return state.cards.filter(c=>c.status==='miss');
+  if(state.currentMode==='review') return state.cards.filter(c=>c.status==='review');
+  return state.cards.filter(c=>c.status!=='retired');
+}
+function rebuildSession(){ session=eligibleCards().map(c=>c.id); idx=0; showingBack=false; render(); }
+function getCard(){
+  if(!session.length) return null;
+  if(idx>=session.length) idx=0;
+  return state.cards.find(c=>c.id===session[idx]) || null;
+}
+function render(){
+  const c=getCard();
+  activeCount.textContent=state.cards.filter(c=>c.status!=='retired').length;
+  retiredCount.textContent=state.cards.filter(c=>c.status==='retired').length;
+  reviewCount.textContent=state.cards.filter(c=>c.status==='review').length;
+  missCount.textContent=state.cards.filter(c=>c.status==='miss').length;
+  modePill.textContent=state.currentMode==='miss'?"Don’t Know deck":state.currentMode==='review'?"Review Again deck":"Active deck";
+
+  if(!c){
+    sideLabel.textContent='Ready';
+    cardText.textContent=state.cards.length?'No cards in this group.':'Add or import FAR cards to begin.';
+    hint.textContent=state.cards.length?'Choose another study group below.':'Your progress saves on this device.';
+    [retireBtn,reviewBtn,missBtn].forEach(b=>b.disabled=true);
+    bar.style.width='0%';
+    return;
+  }
+  [retireBtn,reviewBtn,missBtn].forEach(b=>b.disabled=false);
+  sideLabel.textContent=showingBack?'Answer':'Question';
+  cardText.textContent=showingBack?c.back:c.front;
+  hint.textContent=showingBack?'Choose one of the three ratings below.':'Tap the card to reveal the answer.';
+  bar.style.width=((idx+1)/Math.max(session.length,1)*100)+'%';
+}
+function flip(){ if(getCard()){showingBack=!showingBack;render();} }
+function rate(status){
+  const c=getCard(); if(!c) return;
+  state.history.push({id:c.id,prev:c.status});
+  c.status=status; save(); session.splice(idx,1);
+  if(idx>=session.length) idx=0; showingBack=false; render();
+}
+function addCard(front,back){
+  state.cards.push({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random())),front:front.trim(),back:back.trim(),status:'new'});
+  save();
+}
+
+flashcard.addEventListener('click',flip);
+flashcard.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip();}});
+retireBtn.onclick=()=>rate('retired');
+reviewBtn.onclick=()=>rate('review');
+missBtn.onclick=()=>rate('miss');
+addBtn.onclick=()=>addDialog.showModal();
+importBtn.onclick=()=>importDialog.showModal();
+
+saveCardBtn.onclick=()=>{
+  const f=frontInput.value,b=backInput.value;
+  if(!f.trim()||!b.trim()) return alert('Add both a question and an answer.');
+  addCard(f,b); frontInput.value=''; backInput.value=''; addDialog.close(); rebuildSession();
+};
+doImportBtn.onclick=()=>{
+  const lines=importText.value.split(/\r?\n/).filter(x=>x.trim()); let n=0;
+  for(const line of lines){
+    const p=line.indexOf('|');
+    if(p>0){ const f=line.slice(0,p).trim(),b=line.slice(p+1).trim(); if(f&&b){addCard(f,b);n++;}}
+  }
+  importText.value=''; importDialog.close(); rebuildSession(); alert(`Imported ${n} card${n===1?'':'s'}.`);
+};
+missedBtn.onclick=()=>{state.currentMode='miss';save();rebuildSession();};
+reviewAgainBtn.onclick=()=>{state.currentMode='review';save();rebuildSession();};
+allActiveBtn.onclick=()=>{state.currentMode='active';save();rebuildSession();};
+undoBtn.onclick=()=>{
+  const last=state.history.pop(); if(!last) return alert('Nothing to undo.');
+  const c=state.cards.find(c=>c.id===last.id); if(c)c.status=last.prev; save(); rebuildSession();
+};
+resetBtn.onclick=()=>{
+  if(!confirm('Reset all card ratings? The cards themselves will stay.')) return;
+  state.cards.forEach(c=>c.status='new'); state.history=[]; state.currentMode='active'; save(); rebuildSession();
+};
+exportBtn.onclick=()=>{
+  const content=state.cards.map(c=>`${c.front} | ${c.back}`).join('\n');
+  const blob=new Blob([content],{type:'text/plain'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='FAR_flashcards.txt'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+rebuildSession();
+</script>
+</body>
+</html>
