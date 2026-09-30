@@ -129,8 +129,65 @@
 </dialog>
 
 <script>
-const KEY='farFlashcards_v2';
-const defaultState={cards:[], currentMode:'active', history:[]};
+const KEY='farFlashcards_v3';
+const defaultState={
+  cards:[
+    {
+      front:"Which inventory methods use lower of cost or NRV?",
+      back:"FIFO and weighted-average."
+    },
+    {
+      front:"When do you write inventory down under lower of cost or NRV?",
+      back:"When NRV is below cost. Write inventory down to NRV and recognize the loss."
+    },
+    {
+      front:"Which inventory methods use lower of cost or market?",
+      back:"LIFO and the retail inventory method."
+    },
+    {
+      front:"How do you determine market under lower of cost or market?",
+      back:"Use the middle value of replacement cost, NRV, and NRV minus normal profit."
+    },
+    {
+      front:"What is the ceiling under lower of cost or market?",
+      back:"NRV."
+    },
+    {
+      front:"What is the floor under lower of cost or market?",
+      back:"NRV minus normal profit."
+    },
+    {
+      front:"After determining market under LCM, what do you do?",
+      back:"Compare market with original cost and use the lower amount."
+    },
+    {
+      front:"What is the difference between cost and replacement cost?",
+      back:"Cost is what you originally paid. Replacement cost is what it costs now to replace."
+    },
+    {
+      front:"What is the weighted-average unit cost formula?",
+      back:"Total cost divided by total units."
+    },
+    {
+      front:"Under FIFO, which costs go to COGS first?",
+      back:"The oldest costs."
+    },
+    {
+      front:"When prices rise, what effect does LIFO have?",
+      back:"Higher COGS, lower ending inventory, and lower net income."
+    },
+    {
+      front:"If ending inventory is overstated, what happens?",
+      back:"COGS is understated and net income is overstated."
+    },
+    {
+      front:"If ending inventory is understated, what happens?",
+      back:"COGS is overstated and net income is understated."
+    }
+  ],
+  currentMode:'active',
+  history:[]
+};
 let state=load(), session=[], idx=0, showingBack=false;
 
 function cloneDefault(){ return JSON.parse(JSON.stringify(defaultState)); }
